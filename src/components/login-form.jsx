@@ -25,7 +25,6 @@ const LoginForm = ({ show, handleClose }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    console.log(`Username: ${username}, Password: ${password}`);
 
     toggleIsLoading(true);
     fetch(remoteUrl + "/api/users/login", {
@@ -42,7 +41,6 @@ const LoginForm = ({ show, handleClose }) => {
         return response.json();
       })
       .then((data) => {
-        console.log(data);
         toggleIsLoading(false);
 
         if (data.error) {

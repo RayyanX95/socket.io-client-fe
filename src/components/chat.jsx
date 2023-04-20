@@ -7,13 +7,6 @@ import { UserContext } from "../user-context";
 
 const remoteUrl = "https://chat-runtime-with-video.onrender.com";
 const localUrl = "http://localhost:5000";
-const token = JSON.parse(localStorage.getItem("token"));
-
-let options = {};
-if (token) {
-  options.auth = { token: `Bearer ${token}` };
-}
-const socket = io(remoteUrl, options);
 
 function ChatRoom() {
   const chatLeastBottom = useRef();
@@ -27,16 +20,31 @@ function ChatRoom() {
   const [messagesStack, setMessagesStack] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isRemoteTyping, setIsRemoteTyping] = useState(false);
+  const [socket, setSocket] = useState(null);
 
   const onMessageHandler = () => {
-    socket.on("message", (data) => {
-      setRemoteMessages((messages) => [...messages, data]);
-      setMessagesStack((messages) => [
-        ...messages,
-        { text: data, type: "REMOTE" },
-      ]);
-    });
+    socket &&
+      socket.on("message", (data) => {
+        setRemoteMessages((messages) => [...messages, data]);
+        setMessagesStack((messages) => [
+          ...messages,
+          { text: data, type: "REMOTE" },
+        ]);
+      });
   };
+
+  useEffect(() => {
+    console.log("uu - isSignedIn", isSignedIn);
+    const token = JSON.parse(localStorage.getItem("token"));
+
+    let options = {};
+    if (token) {
+      options.auth = { token };
+    }
+    const socket = io(remoteUrl, options);
+    setSocket(socket);
+    return () => {};
+  }, [isSignedIn]);
 
   const focusChatTextBox = () => chatTextBox.current.focus();
   const scrollToChatLeastBottom = () =>
@@ -46,14 +54,13 @@ function ChatRoom() {
 
   useEffect(() => {
     onMessageHandler();
-    socket.on("typing", (data) => {
-      console.log("isRemoteTyping", data);
-      setIsRemoteTyping(data);
-    });
-  }, []);
+    socket &&
+      socket.on("typing", (data) => {
+        setIsRemoteTyping(data);
+      });
+  }, [socket]);
 
   useEffect(() => {
-    console.log("isSignedIn", isSignedIn);
     isSignedIn && focusChatTextBox();
   }, [isSignedIn]);
 
@@ -65,7 +72,7 @@ function ChatRoom() {
   const handleSendMessage = (event) => {
     event.preventDefault();
 
-    socket.emit("message", messageText);
+    socket && socket.emit("message", messageText);
     setLocalMessages((localMessages) => [...localMessages, messageText]);
     setMessagesStack((messages) => [
       ...messages,
@@ -78,20 +85,20 @@ function ChatRoom() {
     if (isTyping) {
       const timeoutId = setTimeout(() => {
         setIsTyping(false);
-        socket.emit("typing", false);
+        socket && socket.emit("typing", false);
       }, 1500);
       return () => {
         clearTimeout(timeoutId);
       };
     }
-  }, [isTyping]);
+  }, [isTyping, socket]);
 
   const handleInputKeyDown = (event) => {
     if (event.key === "Enter") {
       handleSendMessage(event);
     } else if (!isTyping) {
       setIsTyping(true);
-      socket.emit("typing", true);
+      socket && socket.emit("typing", true);
     }
   };
 
