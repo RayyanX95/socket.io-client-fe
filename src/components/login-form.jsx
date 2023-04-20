@@ -51,6 +51,7 @@ const LoginForm = ({ show, handleClose }) => {
           setIsSignedIn(true);
           localStorage.setItem("token", JSON.stringify(data.token));
           setErrMessage("");
+          window.location.reload();
         }
       })
       .catch((error) => {

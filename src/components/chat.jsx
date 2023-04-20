@@ -8,6 +8,14 @@ import { UserContext } from "../user-context";
 const remoteUrl = "https://chat-runtime-with-video.onrender.com";
 const localUrl = "http://localhost:5000";
 
+const token = JSON.parse(localStorage.getItem("token"));
+
+let options = {};
+if (token) {
+  options.auth = { token };
+}
+const socket = io(remoteUrl, options);
+
 function ChatRoom() {
   const chatLeastBottom = useRef();
   const chatTextBox = useRef();
@@ -20,7 +28,6 @@ function ChatRoom() {
   const [messagesStack, setMessagesStack] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isRemoteTyping, setIsRemoteTyping] = useState(false);
-  const [socket, setSocket] = useState(null);
 
   const onMessageHandler = () => {
     socket &&
@@ -32,19 +39,6 @@ function ChatRoom() {
         ]);
       });
   };
-
-  useEffect(() => {
-    console.log("uu - isSignedIn", isSignedIn);
-    const token = JSON.parse(localStorage.getItem("token"));
-
-    let options = {};
-    if (token) {
-      options.auth = { token };
-    }
-    const socket = io(remoteUrl, options);
-    setSocket(socket);
-    return () => {};
-  }, [isSignedIn]);
 
   const focusChatTextBox = () => chatTextBox.current.focus();
   const scrollToChatLeastBottom = () =>
@@ -58,7 +52,7 @@ function ChatRoom() {
       socket.on("typing", (data) => {
         setIsRemoteTyping(data);
       });
-  }, [socket]);
+  }, []);
 
   useEffect(() => {
     isSignedIn && focusChatTextBox();
@@ -91,7 +85,7 @@ function ChatRoom() {
         clearTimeout(timeoutId);
       };
     }
-  }, [isTyping, socket]);
+  }, [isTyping]);
 
   const handleInputKeyDown = (event) => {
     if (event.key === "Enter") {
