@@ -172,6 +172,7 @@ const ChatContainer = styled.div`
   flex-direction: column;
   width: 500px;
   border-radius: 0.4rem;
+  background-color: #fff;
   filter: ${(props) => `blur(${props.isSignedIn ? "0" : "3.5px"})`};
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.15),
