@@ -16,18 +16,17 @@ function RoomForm({ show, handleClose }) {
     handleClose();
   };
 
-  console.log("socket", socket);
   return (
     <Modal show={show} onHide={handleClose}>
       <Modal.Header closeButton>
-        <Modal.Title>Create or enter room</Modal.Title>
+        <Modal.Title>Create or Join Room</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
           <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
             <Form.Control
               type="text"
-              placeholder="Room Id"
+              placeholder="Create / Join Room Id"
               autoFocus
               onChange={(e) => handleInput(e.target.value)}
             />

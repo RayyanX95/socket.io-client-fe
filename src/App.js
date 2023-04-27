@@ -32,8 +32,12 @@ function App() {
   const logout = () => {
     localStorage.removeItem("token");
     setIsSignedIn(false);
+  };
 
+  const handleLeaveRoom = () => {
     socket && socket.emit("leaveRoom", roomId);
+
+    setRoomId();
   };
 
   return (
@@ -58,7 +62,13 @@ function App() {
             </>
           ) : (
             <TopActions>
-              <LinkBtn onClick={handleShowRoomModal}>Create Room</LinkBtn>
+              {roomId ? (
+                <LinkBtn onClick={handleLeaveRoom}>Leave Room</LinkBtn>
+              ) : (
+                <LinkBtn onClick={handleShowRoomModal}>
+                  Create or Join Room
+                </LinkBtn>
+              )}
               <LinkBtn theme="red" onClick={() => logout(socket)}>
                 Logout
               </LinkBtn>
@@ -106,4 +116,5 @@ const TopActions = styled.div`
   display: flex;
   justify-content: center;
   gap: 5rem;
+  align-items: center;
 `;

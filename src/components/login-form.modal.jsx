@@ -27,7 +27,7 @@ const LoginForm = ({ show, handleClose }) => {
     event.preventDefault();
 
     toggleIsLoading(true);
-    fetch(localUrl + "/api/users/login", {
+    fetch(remoteUrl + "/api/users/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

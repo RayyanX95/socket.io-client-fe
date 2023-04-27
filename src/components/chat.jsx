@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { RiEmotionLaughFill } from "react-icons/ri";
 import { UserContext } from "../user-context";
 
-// const remoteUrl = "https://chat-runtime-with-video.onrender.com";
+const remoteUrl = "https://chat-runtime-with-video.onrender.com";
 const localUrl = "http://localhost:5000";
 
 const token = JSON.parse(localStorage.getItem("token"));
@@ -14,7 +14,7 @@ let options = {};
 if (token) {
   options.auth = { token };
 }
-const socket = io(localUrl, options);
+const socket = io(remoteUrl, options);
 
 function ChatRoom() {
   const chatLeastBottom = useRef();
@@ -104,10 +104,12 @@ function ChatRoom() {
     }
   }, [isTyping]);
 
+  console.log("roomId", roomId);
+
   return (
-    <ChatContainer style={{ maxWidth: 700 }} isSignedIn={isSignedIn}>
+    <ChatContainer isBlur={!isSignedIn || !roomId}>
       <ChatHeader>
-        <h6>Start Chatting ✌️</h6>
+        <h6>{roomId || "Start Chatting ✌️"}</h6>
         {isRemoteTyping && <Typing>typing...</Typing>}
       </ChatHeader>
       <ChatBody>
@@ -165,7 +167,7 @@ function ChatRoom() {
         </form>
       </ChatInput>
 
-      {!isSignedIn && <OverlayChat />}
+      {!isSignedIn || !roomId ? <OverlayChat /> : null}
     </ChatContainer>
   );
 }
@@ -178,7 +180,7 @@ const ChatContainer = styled.div`
   width: 500px;
   border-radius: 0.4rem;
   background-color: #fff;
-  filter: ${(props) => `blur(${props.isSignedIn ? "0" : "3.5px"})`};
+  filter: ${(props) => `blur(${props.isBlur ? "3.5px" : "0"})`};
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.15),
     0 8px 16px rgba(0, 0, 0, 0.15), 0 16px 32px rgba(0, 0, 0, 0.15);
@@ -205,7 +207,7 @@ const ChatHeader = styled.div`
   height: 3.5rem;
   padding: 0.3rem 1rem;
   border-bottom: 1px solid #dcdcdc;
-  background-color: rgb(94, 181, 26);
+  background-color: #5eb51a;
   border-radius: 0.4rem 0.4rem 0 0;
 
   h6 {
