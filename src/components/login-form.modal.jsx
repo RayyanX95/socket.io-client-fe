@@ -27,7 +27,7 @@ const LoginForm = ({ show, handleClose }) => {
     event.preventDefault();
 
     toggleIsLoading(true);
-    fetch(remoteUrl + "/api/users/login", {
+    fetch(localUrl + "/api/users/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,6 +50,7 @@ const LoginForm = ({ show, handleClose }) => {
         if (data.token) {
           setIsSignedIn(true);
           localStorage.setItem("token", JSON.stringify(data.token));
+          localStorage.setItem("username", JSON.stringify(username));
           setErrMessage("");
           window.location.reload();
         }
@@ -61,7 +62,13 @@ const LoginForm = ({ show, handleClose }) => {
   };
 
   return (
-    <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false}>
+    <Modal
+      show={show}
+      onHide={handleClose}
+      backdrop="static"
+      keyboard={false}
+      centered
+    >
       <Modal.Header closeButton>
         <Modal.Title>Sign in</Modal.Title>
       </Modal.Header>

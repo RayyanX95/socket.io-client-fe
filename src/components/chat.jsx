@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { RiEmotionLaughFill } from "react-icons/ri";
 import { UserContext } from "../user-context";
 
-const remoteUrl = "https://chat-runtime-with-video.onrender.com";
+// const remoteUrl = "https://chat-runtime-with-video.onrender.com";
 const localUrl = "http://localhost:5000";
 
 const token = JSON.parse(localStorage.getItem("token"));
@@ -14,17 +14,17 @@ let options = {};
 if (token) {
   options.auth = { token };
 }
-const socket = io(remoteUrl, options);
+const socket = io(localUrl, options);
 
 function ChatRoom() {
   const chatLeastBottom = useRef();
   const chatTextBox = useRef();
 
-  const { isSignedIn } = useContext(UserContext);
+  const { isSignedIn, setSocket, roomId, username } = useContext(UserContext);
 
-  const [remoteMessages, setRemoteMessages] = useState([]);
+  // const [remoteMessages, setRemoteMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
-  const [localMessages, setLocalMessages] = useState([]);
+  // const [localMessages, setLocalMessages] = useState([]);
   const [messagesStack, setMessagesStack] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isRemoteTyping, setIsRemoteTyping] = useState(false);
@@ -32,12 +32,30 @@ function ChatRoom() {
   const onMessageHandler = () => {
     socket &&
       socket.on("message", (data) => {
-        setRemoteMessages((messages) => [...messages, data]);
-        setMessagesStack((messages) => [
-          ...messages,
-          { text: data, type: "REMOTE" },
-        ]);
+        // setRemoteMessages((messages) => [...messages, data]);
+        setMessagesStack((messages) => [...messages, data]);
       });
+  };
+
+  const handleSendMessage = (event) => {
+    event.preventDefault();
+
+    const message = {
+      sender: {
+        id: username,
+        name: username,
+      },
+      content: messageText,
+      timestamp: Date.now(),
+      type: "text",
+      status: "",
+      roomId: roomId,
+    };
+
+    socket && socket.emit("message", message);
+    // setLocalMessages((localMessages) => [...localMessages, messageText]);
+    setMessagesStack((messages) => [...messages, message]);
+    setMessageText("");
   };
 
   const focusChatTextBox = () => chatTextBox.current.focus();
@@ -46,13 +64,24 @@ function ChatRoom() {
       behavior: "smooth",
     });
 
+  const handleInputKeyDown = (event) => {
+    if (event.key === "Enter") {
+      handleSendMessage(event);
+    } else if (!isTyping) {
+      setIsTyping(true);
+      socket && socket.emit("typing", true);
+    }
+  };
+
   useEffect(() => {
     onMessageHandler();
     socket &&
       socket.on("typing", (data) => {
         setIsRemoteTyping(data);
       });
-  }, []);
+
+    socket && setSocket(socket);
+  }, [setSocket]);
 
   useEffect(() => {
     isSignedIn && focusChatTextBox();
@@ -62,18 +91,6 @@ function ChatRoom() {
     scrollToChatLeastBottom();
     // focusChatTextBox();
   }, [messagesStack]);
-
-  const handleSendMessage = (event) => {
-    event.preventDefault();
-
-    socket && socket.emit("message", messageText);
-    setLocalMessages((localMessages) => [...localMessages, messageText]);
-    setMessagesStack((messages) => [
-      ...messages,
-      { text: messageText, type: "LOCAL" },
-    ]);
-    setMessageText("");
-  };
 
   useEffect(() => {
     if (isTyping) {
@@ -87,19 +104,10 @@ function ChatRoom() {
     }
   }, [isTyping]);
 
-  const handleInputKeyDown = (event) => {
-    if (event.key === "Enter") {
-      handleSendMessage(event);
-    } else if (!isTyping) {
-      setIsTyping(true);
-      socket && socket.emit("typing", true);
-    }
-  };
-
   return (
     <ChatContainer style={{ maxWidth: 700 }} isSignedIn={isSignedIn}>
       <ChatHeader>
-        <h5>Start Chatting ✌️</h5>
+        <h6>Start Chatting ✌️</h6>
         {isRemoteTyping && <Typing>typing...</Typing>}
       </ChatHeader>
       <ChatBody>
@@ -109,25 +117,22 @@ function ChatRoom() {
               <small>Let's be in touch 🤙</small>
             </Alert>
             {messagesStack.map((message, index) => {
-              const now = new Date();
-              const hours = now.getHours().toString();
-              const minutes = now.getMinutes().toString();
-              const time = `${hours.padStart(2, "0")}:${minutes.padStart(
-                2,
-                "0"
-              )}`;
-              return message.type === "REMOTE" ? (
-                <div className="message incoming" key={index + message}>
+              return message.sender?.id !== username ? (
+                <div className="message incoming" key={index}>
                   <div className="message-bubble incoming">
-                    <p>{message.text}</p>
-                    <small>{time}</small>
+                    <p>{message.content}</p>
+                    <small>
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </small>
                   </div>
                 </div>
               ) : (
                 <div className="message outgoing" key={index}>
                   <div className="message-bubble outgoing">
-                    <p>{message.text}</p>
-                    <small>{time}</small>
+                    <p>{message.content}</p>
+                    <small>
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </small>
                   </div>
                 </div>
               );
@@ -177,6 +182,10 @@ const ChatContainer = styled.div`
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.15),
     0 8px 16px rgba(0, 0, 0, 0.15), 0 16px 32px rgba(0, 0, 0, 0.15);
+
+  @media (max-width: 499px) {
+    width: 94%;
+  }
 `;
 
 const OverlayChat = styled.div`
@@ -199,7 +208,7 @@ const ChatHeader = styled.div`
   background-color: rgb(94, 181, 26);
   border-radius: 0.4rem 0.4rem 0 0;
 
-  h5 {
+  h6 {
     margin: 0;
     color: #d8ddd4;
   }
@@ -267,6 +276,7 @@ const ChatMessages = styled.div`
     word-wrap: break-word;
 
     &.incoming {
+      /* background-color: #e4e4e4; */
       background-color: #f2f2f2;
     }
 
@@ -305,13 +315,17 @@ const ChatInput = styled.div`
 
     input {
       flex-grow: 1;
-      margin: 0 1rem;
+      margin: 0 0.2rem;
       border: none;
       font-size: 1rem;
 
       &:focus {
         outline: none;
       }
+    }
+
+    @media (max-width: 499px) {
+      padding: 0.5rem;
     }
   }
 `;
@@ -333,6 +347,7 @@ const TextInput = styled.input`
   background-color: #dcf8c6;
   padding: 0.5rem 1rem;
   border-radius: 1rem;
+  width: 70%;
 `;
 
 const Typing = styled.small`
